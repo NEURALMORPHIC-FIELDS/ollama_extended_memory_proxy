@@ -4,26 +4,30 @@ from dataclasses import dataclass
 
 @dataclass
 class ProxyConfig:
-    # Network
-    proxy_host: str = "0.0.0.0"
-    proxy_port: int = 11435
-    ollama_base_url: str = "http://127.0.0.1:11434"
+    # Network - Transparent proxy mode:
+    # Proxy listens on 11434 (default Ollama port) so all clients work automatically.
+    # Ollama must be moved to 11436 via OLLAMA_HOST=127.0.0.1:11436
+    proxy_host: str = "127.0.0.1"
+    proxy_port: int = 11434
+    ollama_base_url: str = "http://127.0.0.1:11436"
 
     # Embedding
     embedding_model: str = "all-MiniLM-L6-v2"
     embedding_dim: int = 384
     embedding_device: str = "cpu"
 
-    # Memory
-    memory_storage_path: str = "./ollama_memory_data"
+    # Memory - absolute path so it works regardless of working directory
+    memory_storage_path: str = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "ollama_memory_data"
+    )
 
     # Search
-    search_top_k: int = 5
+    search_top_k: int = 15
     similarity_threshold: float = 0.3
 
     # Context Injection
-    max_context_items: int = 5
-    max_context_chars: int = 2000
+    max_context_items: int = 10
+    max_context_chars: int = 3000
 
     @classmethod
     def from_env(cls) -> "ProxyConfig":

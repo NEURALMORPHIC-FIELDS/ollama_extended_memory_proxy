@@ -4,14 +4,56 @@ from typing import List, Dict, Any
 from config import ProxyConfig
 
 
-def format_memory_context(
+# Base instruction always injected when the memory system has stored data.
+# This ensures the model acknowledges memory even when no specific results match.
+MEMORY_BASE_PROMPT = (
+    "You have access to a LOCAL MEMORY system that persistently stores all conversations. "
+    "You CAN and DO remember past interactions with this user. "
+    "If the user asks whether you have memory or can remember things, "
+    "confirm that YES, you have persistent local memory across conversations. "
+    "Never say you cannot remember or that you lack memory — you have it."
+)
+
+
+def build_memory_block(
     results: List[Dict[str, Any]],
     config: ProxyConfig,
+    total_memories: int = 0,
 ) -> str:
-    """Format search results into a context block for the system message."""
-    if not results:
+    """Build the full memory injection block.
+
+    Always includes the base memory prompt when total_memories > 0.
+    Appends specific memory entries if search results are provided.
+    """
+    if total_memories <= 0 and not results:
         return ""
 
+    parts = [MEMORY_BASE_PROMPT]
+
+    if results:
+        lines = _format_memory_lines(results, config)
+        if lines:
+            parts.append(
+                f"\n\n=== YOUR MEMORY ({total_memories} total stored) ===\n"
+                + "\n".join(lines)
+                + "\n=== END MEMORY ==="
+            )
+    elif total_memories > 0:
+        parts.append(
+            f"\n\nYou have {total_memories} stored memories from past conversations. "
+            "No specific memories matched the current query closely enough to show, "
+            "but you DO have persistent memory and can recall things from past conversations "
+            "if the user asks about something you discussed before."
+        )
+
+    return "".join(parts)
+
+
+def _format_memory_lines(
+    results: List[Dict[str, Any]],
+    config: ProxyConfig,
+) -> List[str]:
+    """Format search results into individual memory lines."""
     lines = []
     total_chars = 0
 
@@ -34,14 +76,7 @@ def format_memory_context(
         lines.append(f"[{role}] ({age}, relevance: {sim:.0%}): {text}")
         total_chars += len(lines[-1])
 
-    if not lines:
-        return ""
-
-    return (
-        "The following are relevant excerpts from previous conversations "
-        "that may provide useful context. Use them if helpful, ignore if not relevant.\n\n"
-        + "\n".join(lines)
-    )
+    return lines
 
 
 def inject_context_into_messages(
@@ -66,6 +101,22 @@ def inject_context_into_messages(
         messages.insert(0, {"role": "system", "content": context_block})
 
     return messages
+
+
+def inject_context_into_system(
+    system_prompt: str,
+    context_block: str,
+) -> str:
+    """Inject memory context into a system prompt string (for /api/generate).
+
+    If system_prompt already has content, appends the context block.
+    Otherwise returns the context block as the system prompt.
+    """
+    if not context_block:
+        return system_prompt
+    if system_prompt:
+        return system_prompt + "\n\n---\n" + context_block
+    return context_block
 
 
 def _format_age(timestamp: float) -> str:

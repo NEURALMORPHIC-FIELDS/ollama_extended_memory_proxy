@@ -10,7 +10,7 @@ from fastapi.responses import StreamingResponse
 from config import ProxyConfig
 from embedder import Embedder
 from memory_manager import MemoryManager
-from context_injection import format_memory_context, inject_context_into_messages
+from context_injection import build_memory_block, inject_context_into_messages, inject_context_into_system
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,18 @@ async def shutdown():
 
 @app.post("/api/chat")
 async def chat(request: Request):
-    body = await request.json()
+    # Robust JSON parsing: handle encoding issues from various clients
+    raw_body = await request.body()
+    try:
+        body = json.loads(raw_body)
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
+        logger.warning(f"JSON parse failed ({e}), trying with utf-8 replace...")
+        try:
+            body = json.loads(raw_body.decode("utf-8", errors="replace"))
+        except Exception:
+            # Last resort: forward raw to Ollama without memory
+            logger.error("Cannot parse request body, forwarding raw to Ollama")
+            return await _stream_passthrough("POST", "/api/chat", {}, raw_body)
 
     messages = body.get("messages", [])
     stream = body.get("stream", True)
@@ -66,23 +77,26 @@ async def chat(request: Request):
     user_text = _extract_last_user_message(messages)
 
     # Step 2: Generate embedding and search memory
-    context_block = ""
+    results = []
     if user_text and memory.count > 0:
-        query_embedding = await asyncio.to_thread(embedder.embed, user_text)
-        results = await asyncio.to_thread(
-            memory.search_relevant,
-            query_embedding,
-            config.search_top_k,
-            config.similarity_threshold,
-        )
-        if results:
-            context_block = format_memory_context(results, config)
-            logger.info(
-                f"Memory: {len(results)} results injected "
-                f"(best sim: {results[0]['similarity']:.3f})"
+        try:
+            query_embedding = await asyncio.to_thread(embedder.embed, user_text)
+            results = await asyncio.to_thread(
+                memory.search_relevant,
+                query_embedding,
+                config.search_top_k,
+                config.similarity_threshold,
             )
+            if results:
+                logger.info(
+                    f"Memory: {len(results)} results found "
+                    f"(best sim: {results[0]['similarity']:.3f})"
+                )
+        except Exception as e:
+            logger.error(f"Memory search failed: {e}")
 
-    # Step 3: Inject context into messages
+    # Step 3: Inject memory context (always when memory has data)
+    context_block = build_memory_block(results, config, memory.count)
     if context_block:
         body["messages"] = inject_context_into_messages(messages, context_block)
 
@@ -142,18 +156,121 @@ async def _non_stream_chat(body: dict, user_text: str, model_name: str):
     )
 
 
+# ==================================================================
+# /api/generate -- Intercepted endpoint (used by `ollama run` CLI)
+# ==================================================================
+
+@app.post("/api/generate")
+async def generate(request: Request):
+    """Intercept /api/generate (used by `ollama run`) with memory augmentation."""
+    raw_body = await request.body()
+    try:
+        body = json.loads(raw_body)
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
+        logger.warning(f"JSON parse failed on /api/generate ({e}), trying utf-8 replace...")
+        try:
+            body = json.loads(raw_body.decode("utf-8", errors="replace"))
+        except Exception:
+            logger.error("Cannot parse /api/generate body, forwarding raw to Ollama")
+            return await _stream_passthrough("POST", "/api/generate", {}, raw_body)
+
+    prompt = body.get("prompt", "")
+    system_prompt = body.get("system", "")
+    stream = body.get("stream", True)
+    model_name = body.get("model", "unknown")
+
+    # Search memory and inject context into system prompt
+    results = []
+    if prompt and memory.count > 0:
+        try:
+            query_embedding = await asyncio.to_thread(embedder.embed, prompt)
+            results = await asyncio.to_thread(
+                memory.search_relevant,
+                query_embedding,
+                config.search_top_k,
+                config.similarity_threshold,
+            )
+            if results:
+                logger.info(
+                    f"Memory(/api/generate): {len(results)} results found "
+                    f"(best sim: {results[0]['similarity']:.3f})"
+                )
+        except Exception as e:
+            logger.error(f"Memory search failed on /api/generate: {e}")
+
+    # Always inject memory block when memory has data
+    context_block = build_memory_block(results, config, memory.count)
+    if context_block:
+        body["system"] = inject_context_into_system(system_prompt, context_block)
+
+    # Forward to Ollama
+    if stream:
+        return await _stream_generate(body, prompt, model_name)
+    else:
+        return await _non_stream_generate(body, prompt, model_name)
+
+
+async def _stream_generate(body: dict, user_text: str, model_name: str):
+    """Handle streaming /api/generate with NDJSON passthrough."""
+    collected_response = []
+
+    async def gen():
+        async with http_client.stream("POST", "/api/generate", json=body) as response:
+            async for line in response.aiter_lines():
+                if not line.strip():
+                    continue
+                yield line + "\n"
+
+                try:
+                    chunk = json.loads(line)
+                    content = chunk.get("response", "")
+                    if content:
+                        collected_response.append(content)
+                except json.JSONDecodeError:
+                    pass
+
+        # Store in memory after stream completes
+        assistant_text = "".join(collected_response)
+        asyncio.create_task(
+            _store_conversation(user_text, assistant_text, model_name)
+        )
+
+    return StreamingResponse(
+        gen(),
+        media_type="application/x-ndjson",
+        headers={"Cache-Control": "no-cache"},
+    )
+
+
+async def _non_stream_generate(body: dict, user_text: str, model_name: str):
+    """Handle non-streaming /api/generate."""
+    response = await http_client.post("/api/generate", json=body)
+    data = response.json()
+
+    assistant_text = data.get("response", "")
+    asyncio.create_task(
+        _store_conversation(user_text, assistant_text, model_name)
+    )
+
+    return Response(
+        content=response.content,
+        status_code=response.status_code,
+        media_type="application/json",
+    )
+
+
 async def _store_conversation(
     user_text: str, assistant_text: str, model_name: str
 ):
     """Store user and assistant messages in memory (background task)."""
     try:
-        if user_text:
+        if user_text and len(user_text) > 5:
             user_emb = await asyncio.to_thread(embedder.embed, user_text)
             await asyncio.to_thread(
                 memory.store_message, user_emb, user_text, "user", model_name
             )
 
-        if assistant_text:
+        if assistant_text and len(assistant_text) > 20 and not _is_unhelpful(assistant_text):
             asst_emb = await asyncio.to_thread(embedder.embed, assistant_text)
             await asyncio.to_thread(
                 memory.store_message,
@@ -163,8 +280,11 @@ async def _store_conversation(
                 model_name,
             )
 
+        # Auto-save to disk after each conversation (prevents data loss on crash)
+        await asyncio.to_thread(memory.save)
+
         logger.debug(
-            f"Stored: user={len(user_text or '')}ch, "
+            f"Stored+saved: user={len(user_text or '')}ch, "
             f"assistant={len(assistant_text or '')}ch, "
             f"total={memory.count} contexts"
         )
@@ -222,6 +342,26 @@ async def _stream_passthrough(method: str, url: str, headers: dict, body: bytes)
 # ==================================================================
 # Helpers
 # ==================================================================
+
+_UNHELPFUL_PHRASES = [
+    "i don't have access",
+    "i don't have persistent memory",
+    "i don't have a persistent memory",
+    "i cannot remember",
+    "i can't remember previous",
+    "i don't have any actual information",
+    "nu am acces la",
+    "nu am memorie",
+    "nu pot accesa",
+    "nu am informatii",
+]
+
+
+def _is_unhelpful(text: str) -> bool:
+    """Check if an assistant response is a generic refusal that shouldn't be stored."""
+    lower = text.lower()
+    return any(phrase in lower for phrase in _UNHELPFUL_PHRASES)
+
 
 def _extract_last_user_message(messages: list) -> Optional[str]:
     """Extract the text of the most recent user message."""

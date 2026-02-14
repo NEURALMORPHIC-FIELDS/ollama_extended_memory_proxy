@@ -18,7 +18,7 @@ def main():
     config = ProxyConfig.from_env()
 
     print("=" * 60)
-    print("  Ollama Memory Proxy")
+    print("  Ollama Memory Proxy (TRANSPARENT MODE)")
     print("=" * 60)
     print(f"  Proxy:      http://{config.proxy_host}:{config.proxy_port}")
     print(f"  Ollama:     {config.ollama_base_url}")
@@ -27,10 +27,11 @@ def main():
     print(f"  Threshold:  {config.similarity_threshold}")
     print(f"  Top-K:      {config.search_top_k}")
     print("=" * 60)
-    print("  Point your client to the proxy port.")
-    print("  Example:")
-    print(f"    set OLLAMA_HOST=http://127.0.0.1:{config.proxy_port}")
-    print("    ollama run qwen3:0.6b")
+    print("  SETUP (one-time):")
+    print("    1. Set system env: OLLAMA_HOST=127.0.0.1:11436")
+    print("    2. Restart Ollama (it will listen on 11436)")
+    print("    3. Start this proxy (listens on 11434)")
+    print("  All clients work automatically - no config changes!")
     print("=" * 60)
 
     uvicorn.run(
