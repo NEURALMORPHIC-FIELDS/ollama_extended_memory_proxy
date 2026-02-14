@@ -1,6 +1,23 @@
-# Ollama Memory Proxy
+<p align="center">
+  <img src="assets/logo.png" alt="Ollama Extended Memory Proxy" width="600">
+</p>
 
-A transparent proxy that gives **any Ollama model persistent conversation memory** across sessions. Your LLM remembers what you told it yesterday, last week, or months ago.
+<h1 align="center">Ollama Extended Memory Proxy</h1>
+
+<p align="center">
+  A transparent proxy that gives <strong>any Ollama model persistent conversation memory</strong> across sessions.<br>
+  Your LLM remembers what you told it yesterday, last week, or months ago.
+</p>
+
+<p align="center">
+  <a href="#quick-start">Quick Start</a> &bull;
+  <a href="#benchmark-results">Benchmarks</a> &bull;
+  <a href="#configuration">Configuration</a> &bull;
+  <a href="#architecture">Architecture</a> &bull;
+  <a href="LICENSE">License</a>
+</p>
+
+---
 
 ```
 Without memory:  "What is my name?"  →  "I don't know your name."
