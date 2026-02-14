@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Memory data (user-specific, regenerated at runtime)
+ollama_memory_data/
+*.pkl
+
+# Logs
+*.log
+proxy.log
+
+# Benchmark results (user-generated)
+BENCHMARK_REPORT.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment
+.env
