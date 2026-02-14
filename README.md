@@ -204,8 +204,10 @@ Check that the proxy is actually running on 11435 and you're connecting to the p
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+**Proprietary License** - Free for personal use and research. Commercial use requires a license. Publications must cite the author and patent. See [LICENSE](LICENSE) for full terms.
+
+**Patent:** EP25216372.0 - FHRSS+FCPE (Omni-Qube-Vault)
 
 ## Author
 
-Vasile Lucian Borbeleac
+Vasile Lucian Borbeleac / [NEURALMORPHIC FIELDS](https://github.com/NEURALMORPHIC-FIELDS)

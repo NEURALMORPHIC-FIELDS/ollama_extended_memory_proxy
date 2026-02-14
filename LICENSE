@@ -1,21 +1,119 @@
-MIT License
+Ollama Extended Memory Proxy - Proprietary Software License
+============================================================
 
 Copyright (c) 2025-2026 Vasile Lucian Borbeleac
+All Rights Reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Patent: EP25216372.0 - Omni-Qube-Vault
+Technology: FHRSS+FCPE (Fractal-Holographic Redundant Storage System +
+            Fractal-Chaotic Persistent Encoding)
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+PROPRIETARY AND CONFIDENTIAL
 
+This software and associated documentation files (the "Software") are the
+exclusive property of Vasile Lucian Borbeleac (the "Owner").
+
+GRANT OF LICENSE
+----------------
+The Owner grants you a limited, non-exclusive, non-transferable license to:
+1. Use the Software for personal, non-commercial purposes
+2. Use the Software for academic research and education
+3. Deploy the Software for internal evaluation and testing
+
+PERMITTED USE
+-------------
+You MAY:
+1. Use the Software freely for personal and private use
+2. Use the Software for academic research and educational purposes
+3. Modify the Software for personal or research use
+4. Share research findings and benchmarks derived from the Software,
+   provided that proper attribution is given (see Attribution below)
+
+RESTRICTIONS
+------------
+You may NOT:
+1. Use the Software for commercial purposes without a commercial license
+2. Sell, sublicense, lease, or redistribute the Software for profit
+3. Incorporate the Software into commercial products or services
+4. Offer the Software as part of a paid service (SaaS, API, hosting, etc.)
+5. Reverse engineer, decompile, or disassemble the patented components
+6. Remove or alter any proprietary notices, labels, or attribution
+7. Use the patented FHRSS+FCPE technology outside of this Software
+   without explicit written authorization
+8. Use the Software to compete with the Owner's products or services
+
+COMMERCIAL LICENSING
+--------------------
+Any commercial use of this Software requires a separate commercial license
+obtained directly from the Owner. This includes but is not limited to:
+- Integrating the Software into commercial products
+- Using the Software to provide paid services
+- Deploying the Software in a revenue-generating capacity
+- Distributing the Software as part of a commercial offering
+
+For commercial licensing inquiries, contact the Owner (see Contact below).
+
+ATTRIBUTION REQUIREMENTS
+------------------------
+Any publication, paper, article, blog post, or public presentation that
+uses, references, or is based on this Software or its underlying
+technologies MUST include:
+1. The name of the Software: "Ollama Extended Memory Proxy"
+2. The name of the inventor: Vasile Lucian Borbeleac
+3. The patent number: EP25216372.0
+4. A link to the original repository
+
+Example citation:
+  "Ollama Extended Memory Proxy by Vasile Lucian Borbeleac.
+   Based on FHRSS+FCPE technology (Patent EP25216372.0).
+   https://github.com/NEURALMORPHIC-FIELDS/ollama_extended_memory_proxy"
+
+PATENT NOTICE
+-------------
+The FHRSS (Fractal-Holographic Redundant Storage System) and FCPE
+(Fractal-Chaotic Persistent Encoding) technologies implemented in this
+Software are protected by European Patent EP25216372.0.
+
+Any commercial use, reproduction, or implementation of these technologies
+requires explicit written authorization from the patent holder.
+
+THIRD-PARTY COMPONENTS
+----------------------
+This Software includes or depends on the following open-source components:
+- FastAPI (MIT License)
+- uvicorn (BSD License)
+- httpx (BSD License)
+- sentence-transformers (Apache 2.0 License)
+- FAISS (MIT License)
+- NumPy (BSD License)
+
+These components remain subject to their respective licenses.
+
+DISCLAIMER OF WARRANTY
+----------------------
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+LIMITATION OF LIABILITY
+-----------------------
+IN NO EVENT SHALL THE OWNER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+
+GOVERNING LAW
+-------------
+This License shall be governed by and construed in accordance with the
+laws of the European Union, without regard to its conflict of law provisions.
+
+CONTACT
+-------
+For commercial licensing, patent licensing, or permission requests:
+Patent Holder: Vasile Lucian Borbeleac
+Patent Number: EP25216372.0
+Organization: NEURALMORPHIC FIELDS
+
+---
+Generated: 2026-02-14
+Version: 1.0.0
